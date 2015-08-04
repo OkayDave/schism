@@ -2,11 +2,65 @@
 
 require 'rubygems'
 require 'thor'
+require 'rest-client'
 
 module Schism
   class CLI < Thor
     include Thor::Actions
+    default_task :send
+    
+    CONFIG_DIR = "#{ENV["HOME"]}/.config/"
+    CONFIG_FILE = "schism_api_key"
+    CONFIG_FULL = "#{CONFIG_DIR}#{CONFIG_FILE}"
+    
+    SEND_URL = "api.clockworksms.com/http/send.aspx"
+    BALANCE_URL = "api.clockworksms.com/http/balance.aspx"
 
+    @recipient = ""
+    @message = ""
+    @@api_key = ""
+
+
+    no_commands do 
+      def load_config
+        exit unless create_config
+        @@api_key = `cat #{CONFIG_FULL}`
+
+      end
+
+      def create_config
+        unless File.exists?(CONFIG_FULL)
+          puts "Creating config at #{CONFIG_FULL}"
+          puts "Enter your Clockwork API key in this file"
+          %x{mkdir #{CONFIG_DIR}} unless File.directory?(CONFIG_DIR)
+          %x{touch #{CONFIG_FULL}}
+          return false
+        else
+          return true
+        end
+      end
+
+     
+      def key_param
+        return {key: @@api_key}    
+      end
+    end
+
+
+    desc "", "Send SMS"
+    def send
+      load_config
+      puts "working"
+    end
+
+    desc "balance", "Get account balance"
+    def balance
+      load_config
+      response = RestClient.get BALANCE_URL, {params: {key: @@api_key}}
+     
+      puts response.body
+    end
+    
   end
 end
 
