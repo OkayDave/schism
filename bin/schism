@@ -7,7 +7,7 @@ require 'rest-client'
 module Schism
   class CLI < Thor
     include Thor::Actions
-    default_task :send
+    default_task :help
     
     CONFIG_DIR = "#{ENV["HOME"]}/.config/"
     CONFIG_FILE = "schism_api_key"
@@ -20,6 +20,8 @@ module Schism
     @message = ""
     @@api_key = ""
 
+    
+    
 
     no_commands do 
       def load_config
@@ -47,11 +49,6 @@ module Schism
     end
 
 
-    desc "", "Send SMS"
-    def send
-      load_config
-      puts "working"
-    end
 
     desc "balance", "Get account balance"
     def balance
@@ -59,6 +56,23 @@ module Schism
       response = RestClient.get BALANCE_URL, {params: {key: @@api_key}}
      
       puts response.body
+    end
+    
+
+    desc "send", "Send message to number"
+    method_option :to, aliases: "-t", desc: "Number to send SMS to. Format: 447000000000", required: true
+    method_option :message, aliases: "-m", desc: "Message to send.", required: true
+    
+    def send()
+      load_config
+
+      response = RestClient.get SEND_URL, {params: {key: @@api_key, to: options[:to], content: options[:message]}}
+
+      if response.code==200
+        puts "Message sent"
+      else
+        puts "Unable to send message, please try again later"
+      end
     end
     
   end
